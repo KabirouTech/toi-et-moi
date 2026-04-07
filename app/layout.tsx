@@ -33,9 +33,9 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full overflow-x-hidden antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-[#ffadf9]/30 selection:text-[#fff6ff]">
+      <body className="flex min-h-full flex-col overflow-x-hidden bg-background text-foreground selection:bg-[#ffadf9]/30 selection:text-[#fff6ff]">
         {children}
         <Toaster
           position="top-center"

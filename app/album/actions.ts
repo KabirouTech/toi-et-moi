@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { validateImageUpload } from '@/lib/image-upload';
 
 export async function uploadAlbumPhotos(formData: FormData) {
   const supabase = await createClient();
@@ -21,9 +22,14 @@ export async function uploadAlbumPhotos(formData: FormData) {
   if (!coupleMember) throw new Error('No couple found');
 
   const images = formData.getAll('images') as File[];
+  const validImages = images.filter((image) => image && image.size > 0);
+  const validationError = validateImageUpload(validImages);
 
-  for (const image of images) {
-    if (!image || !image.size || image.size === 0) continue;
+  if (validationError) {
+    throw new Error(validationError);
+  }
+
+  for (const image of validImages) {
 
     const fileExt = image.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;

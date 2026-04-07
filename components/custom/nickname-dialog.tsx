@@ -44,7 +44,9 @@ export function NicknameDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<button className="text-left" />}>
+      <DialogTrigger
+        render={<button className="w-full min-w-0 overflow-hidden text-left" />}
+      >
         {children}
       </DialogTrigger>
       <DialogContent className="rounded-[2rem] border-white/[0.08] bg-[#21172d] backdrop-blur-[24px] sm:max-w-sm">

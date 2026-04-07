@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { validateImageUpload } from '@/lib/image-upload';
 
 export async function createMemory(formData: FormData) {
   const supabase = await createClient();
@@ -23,8 +24,14 @@ export async function createMemory(formData: FormData) {
   const title = formData.get('title') as string;
   const description = formData.get('description') as string;
   const date = formData.get('date') as string;
+  const images = (formData.getAll('images') as File[]).filter(
+    (image) => image && image.size > 0
+  );
 
   if (!title || !date) throw new Error('Title and date are required');
+
+  const validationError = validateImageUpload(images);
+  if (validationError) throw new Error(validationError);
 
   const { data: memory, error: memoryError } = await supabase
     .from('memories')
@@ -40,12 +47,7 @@ export async function createMemory(formData: FormData) {
 
   if (memoryError || !memory) throw new Error('Failed to create memory');
 
-  // Handle image uploads
-  const images = formData.getAll('images') as File[];
-
   for (const image of images) {
-    if (!image || !image.size || image.size === 0) continue;
-
     const fileExt = image.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `${coupleMember.couple_id}/${memory.id}/${fileName}`;

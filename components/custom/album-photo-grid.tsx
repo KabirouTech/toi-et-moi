@@ -1,8 +1,12 @@
 'use client';
 
 import { useState, useRef, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus, Trash2, X, Loader2, ImageIcon } from 'lucide-react';
+import { toast } from 'sonner';
+
 import { uploadAlbumPhotos, deleteAlbumPhoto } from '@/app/album/actions';
+import { getImageUploadHint, validateImageUpload } from '@/lib/image-upload';
 
 interface AlbumPhoto {
   name: string;
@@ -19,18 +23,40 @@ export function AlbumPhotoGrid({
   const [viewerPhoto, setViewerPhoto] = useState<AlbumPhoto | null>(null);
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    const selectedFiles = Array.from(files);
+    const validationError = validateImageUpload(selectedFiles);
+
+    if (validationError) {
+      toast.error(validationError);
+      e.target.value = '';
+      return;
+    }
+
     const formData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-      formData.append('images', files[i]);
+    for (const file of selectedFiles) {
+      formData.append('images', file);
     }
 
     startTransition(async () => {
-      await uploadAlbumPhotos(formData);
+      try {
+        await uploadAlbumPhotos(formData);
+        router.refresh();
+        toast.success(
+          selectedFiles.length > 1
+            ? 'Les photos ont ete ajoutees a votre album.'
+            : 'La photo a ete ajoutee a votre album.'
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "L'envoi des photos a echoue.";
+        toast.error(message);
+      }
     });
 
     // Reset input
@@ -45,9 +71,17 @@ export function AlbumPhotoGrid({
     formData.append('filePath', filePath);
 
     startTransition(async () => {
-      await deleteAlbumPhoto(formData);
-      if (viewerPhoto?.name === photo.name) {
-        setViewerPhoto(null);
+      try {
+        await deleteAlbumPhoto(formData);
+        router.refresh();
+        toast.success('La photo a ete supprimee.');
+        if (viewerPhoto?.name === photo.name) {
+          setViewerPhoto(null);
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'La suppression a echoue.';
+        toast.error(message);
       }
     });
   };
@@ -56,9 +90,12 @@ export function AlbumPhotoGrid({
     <div className="mt-6">
       {/* Actions bar */}
       <div className="flex items-center justify-between">
-        <p className="font-['Inter'] text-xs uppercase tracking-widest text-[#d7c0d1]">
-          Photos de couple
-        </p>
+        <div>
+          <p className="font-['Inter'] text-xs uppercase tracking-widest text-[#d7c0d1]">
+            Photos de couple
+          </p>
+          <p className="mt-2 text-xs text-[#a995bd]">{getImageUploadHint()}</p>
+        </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => fileInputRef.current?.click()}

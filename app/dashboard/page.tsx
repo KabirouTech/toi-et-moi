@@ -213,7 +213,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-clip">
       <div className="mx-auto max-w-6xl px-4 py-8 pb-40 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between gap-4">
           <div>
@@ -246,7 +246,7 @@ export default async function DashboardPage() {
             <div className="space-y-6">
               <div className="space-y-4">
                 <p className="section-kicker">Votre espace aujourd&apos;hui</p>
-                <h1 className="text-4xl font-semibold tracking-tight text-[#f5e9ff] sm:text-5xl">
+                <h1 className="break-words text-4xl font-semibold tracking-tight text-[#f5e9ff] sm:text-5xl">
                   {coupleName}
                 </h1>
 
@@ -264,9 +264,9 @@ export default async function DashboardPage() {
                 </div>
               </div>
 
-              <div className="surface-panel-soft rounded-[1.85rem] p-4 sm:p-5">
-                <div className="flex items-center gap-4">
-                  <div className="flex -space-x-3">
+              <div className="surface-panel-soft overflow-hidden rounded-[1.85rem] p-4 sm:p-5">
+                <div className="flex min-w-0 items-center gap-4">
+                  <div className="flex shrink-0 -space-x-3">
                     <div className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#180f24] bg-gradient-to-br from-[#ffadf9] to-[#ff77ff] text-sm font-bold text-[#37003a]">
                       {myName.charAt(0).toUpperCase()}
                     </div>
@@ -275,18 +275,18 @@ export default async function DashboardPage() {
                     </div>
                   </div>
 
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 overflow-hidden">
                     {hasPartner ? (
                       <NicknameDialog
                         partnerId={partner!.user_id}
                         partnerDisplayName={partnerRealName}
                         currentNickname={partnerNickname}
                       >
-                        <div className="text-left transition-colors hover:text-[#ffbdf7]">
-                          <p className="truncate text-base font-semibold text-[#f3e8ff]">
+                        <div className="min-w-0 overflow-hidden text-left transition-colors hover:text-[#ffbdf7]">
+                          <p className="overflow-hidden text-ellipsis break-words text-base font-semibold leading-snug text-[#f3e8ff]">
                             {myName} & {partnerDisplayName}
                           </p>
-                          <p className="mt-1 text-sm text-[#baa6cd]">
+                          <p className="mt-1 break-words text-sm text-[#baa6cd]">
                             {partnerNickname
                               ? `Petit nom personnalisé, prénom affiché: ${partnerRealName}.`
                               : 'Personnalisez le petit nom qui apparaît dans votre espace.'}
@@ -295,7 +295,7 @@ export default async function DashboardPage() {
                       </NicknameDialog>
                     ) : (
                       <>
-                        <p className="text-base font-semibold text-[#f3e8ff]">
+                        <p className="break-words text-base font-semibold leading-snug text-[#f3e8ff]">
                           {myName} & votre partenaire
                         </p>
                         <p className="mt-1 text-sm text-[#baa6cd]">
@@ -312,7 +312,7 @@ export default async function DashboardPage() {
                   href={hasPartner ? '/questions' : '/invite'}
                   className={cn(
                     buttonVariants({ size: 'lg' }),
-                    'h-12 rounded-full bg-gradient-to-r from-[#ffadf9] via-[#f793ff] to-[#ff77ff] px-6 text-base font-bold text-[#37003a] shadow-[0_18px_50px_rgba(255,119,255,0.22)] transition-all hover:-translate-y-0.5 hover:bg-transparent hover:text-[#37003a]'
+                    'min-w-0 h-12 rounded-full bg-gradient-to-r from-[#ffadf9] via-[#f793ff] to-[#ff77ff] px-6 text-base font-bold text-[#37003a] shadow-[0_18px_50px_rgba(255,119,255,0.22)] transition-all hover:-translate-y-0.5 hover:bg-transparent hover:text-[#37003a]'
                   )}
                 >
                   {hasPartner ? 'Continuer le rituel' : 'Inviter mon partenaire'}
@@ -322,7 +322,7 @@ export default async function DashboardPage() {
                   href="/memories"
                   className={cn(
                     buttonVariants({ variant: 'outline', size: 'lg' }),
-                    'h-12 rounded-full border-white/10 bg-white/[0.03] px-6 text-base text-[#f2e6ff] hover:bg-white/[0.08]'
+                    'min-w-0 h-12 rounded-full border-white/10 bg-white/[0.03] px-6 text-base text-[#f2e6ff] hover:bg-white/[0.08]'
                   )}
                 >
                   Ajouter un souvenir
@@ -354,7 +354,7 @@ export default async function DashboardPage() {
                   <p className="section-kicker">
                     {hasPartner ? 'Prochaine date' : 'Questions'}
                   </p>
-                  <p className="mt-2 text-base font-semibold text-[#f4e8ff]">
+                  <p className="mt-2 break-words text-base font-semibold text-[#f4e8ff]">
                     {hasPartner
                       ? nextEvent?.title || 'Aucun rendez-vous planifié'
                       : `${questionCount ?? 0} question(s) déjà abordée(s)`}
@@ -372,7 +372,7 @@ export default async function DashboardPage() {
                   <p className="section-kicker">
                     {latestMemory ? 'Dernier souvenir' : 'Souvenirs'}
                   </p>
-                  <p className="mt-2 text-base font-semibold text-[#f4e8ff]">
+                  <p className="mt-2 break-words text-base font-semibold text-[#f4e8ff]">
                     {latestMemory?.title || 'Commencez votre histoire'}
                   </p>
                   <p className="mt-1 text-sm text-[#baa6cd]">
@@ -424,20 +424,20 @@ export default async function DashboardPage() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="group surface-panel rounded-[2rem] p-5 transition-transform duration-200 hover:-translate-y-1"
+                  className="group surface-panel min-w-0 overflow-hidden rounded-[2rem] p-5 transition-transform duration-200 hover:-translate-y-1"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${item.accent} text-[#ffadf9]`}
+                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${item.accent} text-[#ffadf9]`}
                     >
                       <Icon className="h-5 w-5" />
                     </div>
-                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[0.72rem] font-medium text-[#e7d8f5]">
+                    <span className="inline-flex max-w-[65%] shrink items-center overflow-hidden text-ellipsis whitespace-nowrap rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[0.72rem] font-medium text-[#e7d8f5]">
                       {item.metric}
                     </span>
                   </div>
                   <div className="mt-5">
-                    <p className="text-lg font-semibold tracking-tight text-[#f5e9ff]">
+                    <p className="break-words text-lg font-semibold tracking-tight text-[#f5e9ff]">
                       {item.title}
                     </p>
                     <p className="mt-2 text-sm leading-7 text-[#baa6cd]">

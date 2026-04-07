@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+
 import { createMemory } from '@/app/memories/actions';
 import {
   Dialog,
@@ -14,20 +17,32 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, ImageIcon } from 'lucide-react';
+import { getImageUploadHint, validateImageUpload } from '@/lib/image-upload';
 
 export function AddMemoryDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files) return;
 
+    const selectedFiles = Array.from(files);
+    const validationError = validateImageUpload(selectedFiles);
+
+    if (validationError) {
+      toast.error(validationError);
+      e.target.value = '';
+      setPreviews([]);
+      return;
+    }
+
     const urls: string[] = [];
-    for (let i = 0; i < files.length; i++) {
-      urls.push(URL.createObjectURL(files[i]));
+    for (const file of selectedFiles) {
+      urls.push(URL.createObjectURL(file));
     }
     setPreviews(urls);
   }
@@ -35,14 +50,30 @@ export function AddMemoryDialog() {
   async function handleSubmit(formData: FormData) {
     setLoading(true);
     try {
+      const images = (formData.getAll('images') as File[]).filter(
+        (image) => image && image.size > 0
+      );
+      const validationError = validateImageUpload(images);
+
+      if (validationError) {
+        toast.error(validationError);
+        return;
+      }
+
       await createMemory(formData);
+      router.refresh();
       setOpen(false);
       setPreviews([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    } catch {
-      // Error handled by server action
+      toast.success('Votre souvenir a ete ajoute.');
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "La creation du souvenir a echoue.";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -114,6 +145,9 @@ export function AddMemoryDialog() {
             >
               <ImageIcon className="h-6 w-6 text-[#d7c0d1]/60" />
               <span className="text-xs text-[#d7c0d1]">Cliquez pour ajouter des photos</span>
+              <span className="text-center text-[11px] leading-5 text-[#a995bd]">
+                {getImageUploadHint()}
+              </span>
             </div>
             <Input
               ref={fileInputRef}
