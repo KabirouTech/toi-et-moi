@@ -1,0 +1,23 @@
+{
+  "name": "Toi et Moi",
+  "short_name": "Toi&Moi",
+  "description": "Un espace numérique privé pour les couples",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#130a1f",
+  "theme_color": "#1a1025",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
