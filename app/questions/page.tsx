@@ -2,7 +2,10 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
 import { QUESTIONS } from '@/lib/questions';
-import { QuestionsCarousel } from '@/components/custom/questions-carousel';
+import {
+  QuestionsCarousel,
+  type CustomQuestion,
+} from '@/components/custom/questions-carousel';
 import { BottomNav } from '@/components/custom/bottom-nav';
 
 export default async function QuestionsPage() {
@@ -26,7 +29,6 @@ export default async function QuestionsPage() {
     redirect('/setup');
   }
 
-  // Fetch partner info
   const { data: partner } = await supabase
     .from('couple_members')
     .select('display_name')
@@ -34,15 +36,40 @@ export default async function QuestionsPage() {
     .neq('user_id', user.id)
     .single();
 
-  const { data: progress } = await supabase
-    .from('questions_progress')
-    .select('question_index, completed_by')
-    .eq('couple_id', coupleMember.couple_id)
-    .order('completed_at', { ascending: false });
+  const [progressResult, customQuestionsResult] = await Promise.all([
+    supabase
+      .from('questions_progress')
+      .select('question_index, custom_question_id, completed_by, completed_at')
+      .eq('couple_id', coupleMember.couple_id)
+      .order('completed_at', { ascending: false }),
+    supabase
+      .from('custom_questions')
+      .select('id, text, created_by, created_at')
+      .eq('couple_id', coupleMember.couple_id)
+      .order('created_at', { ascending: true }),
+  ]);
 
-  const completedIndices = (progress ?? []).map((p) => p.question_index);
-  const lastCompletedBy = progress?.[0]?.completed_by ?? null;
+  const progress = progressResult.data ?? [];
+  const customQuestions: CustomQuestion[] = (customQuestionsResult.data ?? []).map(
+    (q) => ({
+      id: q.id,
+      text: q.text,
+      createdBy: q.created_by,
+    })
+  );
+
+  const completedBuiltinIndices = progress
+    .filter((p) => p.question_index != null)
+    .map((p) => p.question_index as number);
+  const completedCustomIds = progress
+    .filter((p) => p.custom_question_id != null)
+    .map((p) => p.custom_question_id as string);
+
+  const lastCompletedBy = progress[0]?.completed_by ?? null;
   const hasPartner = !!partner;
+
+  const totalCount = QUESTIONS.length + customQuestions.length;
+  const completedCount = completedBuiltinIndices.length + completedCustomIds.length;
 
   return (
     <div className="min-h-screen">
@@ -63,15 +90,13 @@ export default async function QuestionsPage() {
 
             <div className="inline-flex items-center gap-2 rounded-full border border-[#ffadf9]/16 bg-[#ffadf9]/10 px-4 py-2 text-sm font-medium text-[#ffc7fb]">
               <Sparkles className="h-4 w-4" />
-              {completedIndices.length} / 36 complétées
+              {completedCount} / {totalCount} complétées
             </div>
           </div>
         </div>
 
         <div>
-          <h2 className="sr-only">
-            36 Questions
-          </h2>
+          <h2 className="sr-only">36 Questions</h2>
         </div>
 
         <QuestionsCarousel
@@ -80,8 +105,10 @@ export default async function QuestionsPage() {
           displayName={coupleMember.display_name}
           partnerName={partner?.display_name ?? null}
           hasPartner={hasPartner}
-          questions={QUESTIONS}
-          completedIndices={completedIndices}
+          builtinQuestions={QUESTIONS}
+          initialCustomQuestions={customQuestions}
+          completedBuiltinIndices={completedBuiltinIndices}
+          completedCustomIds={completedCustomIds}
           lastCompletedBy={lastCompletedBy}
         />
       </div>
