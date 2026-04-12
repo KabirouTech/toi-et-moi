@@ -74,6 +74,106 @@ export async function createMemory(formData: FormData) {
   revalidatePath('/memories');
 }
 
+export async function updateMemory(formData: FormData) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error('Not authenticated');
+
+  const memoryId = formData.get('memoryId') as string;
+  const title = formData.get('title') as string;
+  const description = formData.get('description') as string;
+  const date = formData.get('date') as string;
+  const removedPhotoIds = formData.getAll('removedPhotoIds') as string[];
+  const newImages = (formData.getAll('newImages') as File[]).filter(
+    (image) => image && image.size > 0
+  );
+
+  if (!memoryId || !title || !date)
+    throw new Error('Title and date are required');
+
+  const { data: coupleMember } = await supabase
+    .from('couple_members')
+    .select('couple_id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!coupleMember) throw new Error('No couple found');
+
+  const { data: memory } = await supabase
+    .from('memories')
+    .select('id, couple_id')
+    .eq('id', memoryId)
+    .eq('couple_id', coupleMember.couple_id)
+    .single();
+
+  if (!memory) throw new Error('Memory not found');
+
+  await supabase
+    .from('memories')
+    .update({ title, description: description || null, date })
+    .eq('id', memoryId);
+
+  if (removedPhotoIds.length > 0) {
+    const { data: photosToRemove } = await supabase
+      .from('memory_photos')
+      .select('id, image_url')
+      .in('id', removedPhotoIds);
+
+    if (photosToRemove && photosToRemove.length > 0) {
+      const storagePaths = photosToRemove
+        .map((p) => {
+          const match = p.image_url.match(/\/memories\/(.+)$/);
+          return match ? match[1] : null;
+        })
+        .filter(Boolean) as string[];
+
+      if (storagePaths.length > 0) {
+        await supabase.storage.from('memories').remove(storagePaths);
+      }
+
+      await supabase
+        .from('memory_photos')
+        .delete()
+        .in('id', removedPhotoIds);
+    }
+  }
+
+  if (newImages.length > 0) {
+    const validationError = validateImageUpload(newImages);
+    if (validationError) throw new Error(validationError);
+
+    for (const image of newImages) {
+      const fileExt = image.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${coupleMember.couple_id}/${memoryId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('memories')
+        .upload(filePath, image);
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        continue;
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('memories').getPublicUrl(filePath);
+
+      await supabase.from('memory_photos').insert({
+        memory_id: memoryId,
+        image_url: publicUrl,
+      });
+    }
+  }
+
+  revalidatePath('/memories');
+}
+
 export async function deleteMemory(formData: FormData) {
   const supabase = await createClient();
 

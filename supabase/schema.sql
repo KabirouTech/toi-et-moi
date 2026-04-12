@@ -127,6 +127,9 @@ create policy "Members can view memories" on public.memories
 create policy "Members can create memories" on public.memories
   for insert with check (couple_id = public.get_my_couple_id() and created_by = auth.uid());
 
+create policy "Members can update memories" on public.memories
+  for update using (couple_id = public.get_my_couple_id());
+
 create policy "Members can delete memories" on public.memories
   for delete using (couple_id = public.get_my_couple_id());
 

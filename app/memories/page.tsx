@@ -93,6 +93,7 @@ export default async function MemoriesPage() {
                       key={memory.id}
                       memory={memory}
                       coverPhoto={memory.coverPhoto}
+                      photos={memory.photos}
                     />
                   ))}
                 </div>

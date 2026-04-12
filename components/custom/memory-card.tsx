@@ -1,9 +1,15 @@
 'use client';
 
 import { deleteMemory } from '@/app/memories/actions';
+import { EditMemoryDialog } from '@/components/custom/edit-memory-dialog';
 import { formatRelativeDate } from '@/lib/helpers';
 import { Trash2, ImageIcon } from 'lucide-react';
 import { useState } from 'react';
+
+interface Photo {
+  id: string;
+  image_url: string;
+}
 
 interface MemoryCardProps {
   memory: {
@@ -13,9 +19,10 @@ interface MemoryCardProps {
     date: string;
   };
   coverPhoto: string | null;
+  photos: Photo[];
 }
 
-export function MemoryCard({ memory, coverPhoto }: MemoryCardProps) {
+export function MemoryCard({ memory, coverPhoto, photos }: MemoryCardProps) {
   const [deleting, setDeleting] = useState(false);
 
   async function handleDelete(formData: FormData) {
@@ -26,7 +33,6 @@ export function MemoryCard({ memory, coverPhoto }: MemoryCardProps) {
 
   return (
     <div className="group relative break-inside-avoid overflow-hidden rounded-3xl bg-white/5 backdrop-blur-[12px] border border-white/[0.08] transition-all duration-300 hover:shadow-[0_20px_60px_rgba(255,173,249,0.1)]">
-      {/* Cover photo or placeholder */}
       <div className="relative w-full overflow-hidden">
         {coverPhoto ? (
           <div className="relative aspect-[4/3] overflow-hidden">
@@ -43,18 +49,21 @@ export function MemoryCard({ memory, coverPhoto }: MemoryCardProps) {
           </div>
         )}
 
-        {/* Delete button */}
-        <form action={handleDelete} className="absolute right-2 top-2">
-          <input type="hidden" name="memoryId" value={memory.id} />
-          <button
-            type="submit"
-            disabled={deleting}
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-[#180f24]/70 text-[#d7c0d1] opacity-100 backdrop-blur-sm transition-all hover:bg-red-500/30 hover:text-red-400 sm:opacity-0 sm:group-hover:opacity-100"
-          >
-            <Trash2 className="h-3 w-3" />
-            <span className="sr-only">Supprimer le souvenir</span>
-          </button>
-        </form>
+        <div className="absolute right-2 top-2 flex gap-1.5">
+          <EditMemoryDialog memory={memory} photos={photos} />
+
+          <form action={handleDelete}>
+            <input type="hidden" name="memoryId" value={memory.id} />
+            <button
+              type="submit"
+              disabled={deleting}
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-[#180f24]/70 text-[#d7c0d1] opacity-100 backdrop-blur-sm transition-all hover:bg-red-500/30 hover:text-red-400 sm:opacity-0 sm:group-hover:opacity-100"
+            >
+              <Trash2 className="h-3 w-3" />
+              <span className="sr-only">Supprimer le souvenir</span>
+            </button>
+          </form>
+        </div>
       </div>
 
       <div className="flex flex-col gap-1 p-4">
