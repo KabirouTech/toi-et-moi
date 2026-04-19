@@ -80,7 +80,7 @@ begin
     where context_type = 'memory' and context_id = old.id;
   return old;
 end;
-$$ language plpgsql;
+$$ language plpgsql set search_path = public;
 
 drop trigger if exists memories_cleanup_messages on public.memories;
 create trigger memories_cleanup_messages
@@ -97,7 +97,7 @@ begin
     where context_type = 'thread' and context_id = old.id;
   return old;
 end;
-$$ language plpgsql;
+$$ language plpgsql set search_path = public;
 
 drop trigger if exists thread_topics_cleanup_messages on public.thread_topics;
 create trigger thread_topics_cleanup_messages
@@ -122,6 +122,13 @@ declare
 begin
   if p_context_type not in ('memory','thread','main') then
     raise exception 'invalid context_type %', p_context_type;
+  end if;
+
+  if auth.uid() is not null and not exists (
+    select 1 from public.couple_members
+    where couple_id = p_couple_id and user_id = auth.uid()
+  ) then
+    raise exception 'not a member of couple %', p_couple_id;
   end if;
 
   merged_metadata := coalesce(p_metadata, '{}'::jsonb) || jsonb_build_object('event', p_event);
@@ -195,6 +202,32 @@ create policy "Members can update topics" on public.thread_topics
 -- =========================================================================
 -- Realtime : activer la publication sur les nouvelles tables
 -- =========================================================================
-alter publication supabase_realtime add table public.messages;
-alter publication supabase_realtime add table public.message_reads;
-alter publication supabase_realtime add table public.thread_topics;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'messages'
+  ) then
+    execute 'alter publication supabase_realtime add table public.messages';
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'message_reads'
+  ) then
+    execute 'alter publication supabase_realtime add table public.message_reads';
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'thread_topics'
+  ) then
+    execute 'alter publication supabase_realtime add table public.thread_topics';
+  end if;
+end $$;
